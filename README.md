@@ -50,9 +50,9 @@ func _ready() -> void:
 func _on_rpc_request(req_data: RpcAwait.RequestData) -> void:
     if not req_data.data is Dictionary:
         return
-    match req_data["msg"]:
+    match req_data.data["msg"]:
         MSG_GET_USER_INFO:
-            req_data.result = _handle_get_user_info_request(req_data["field"])
+            req_data.result = _handle_get_user_info_request(req_data.data["field"])
 
 
 func _handle_get_user_info_request(field: String) -> String:
