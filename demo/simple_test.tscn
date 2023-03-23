@@ -1,0 +1,94 @@
+[gd_scene load_steps=2 format=3 uid="uid://c1l0hio1au23k"]
+
+[ext_resource type="Script" path="res://demo/simple_test.gd" id="1_qsj40"]
+
+[node name="msg_test" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_qsj40")
+
+[node name="content" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="content"]
+layout_mode = 2
+text = "Please start two instances of this project and have one be the host and the other join as a client.
+You can then press \"send request\" and \"call rpc\" to test the two functions - try clicking them repeatedly and quickly to send multiple requests."
+horizontal_alignment = 1
+
+[node name="columns" type="HBoxContainer" parent="content"]
+layout_mode = 2
+
+[node name="host_column" type="VBoxContainer" parent="content/columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="content/columns/host_column"]
+layout_mode = 2
+text = "Connection"
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="content/columns/host_column"]
+layout_mode = 2
+alignment = 1
+
+[node name="txt_address" type="LineEdit" parent="content/columns/host_column/HBoxContainer"]
+layout_mode = 2
+text = "127.0.0.1"
+placeholder_text = "Address"
+
+[node name="txt_port" type="LineEdit" parent="content/columns/host_column/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "62195"
+placeholder_text = "Port"
+
+[node name="btn_join" type="Button" parent="content/columns/host_column"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "JOIN"
+
+[node name="btn_host" type="Button" parent="content/columns/host_column"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "HOST"
+
+[node name="client_column" type="VBoxContainer" parent="content/columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="content/columns/client_column"]
+layout_mode = 2
+text = "Actions"
+horizontal_alignment = 1
+
+[node name="btn_send_request" type="Button" parent="content/columns/client_column"]
+layout_mode = 2
+size_flags_horizontal = 4
+disabled = true
+text = "Send request"
+
+[node name="btn_send_rpc" type="Button" parent="content/columns/client_column"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Send RPC"
+
+[node name="txt_output" type="TextEdit" parent="content"]
+layout_mode = 2
+size_flags_vertical = 3
+editable = false
+
+[connection signal="pressed" from="content/columns/host_column/btn_join" to="." method="_on_btn_join_pressed"]
+[connection signal="pressed" from="content/columns/host_column/btn_host" to="." method="_on_btn_host_pressed"]
+[connection signal="pressed" from="content/columns/client_column/btn_send_request" to="." method="_on_btn_send_request_pressed"]
+[connection signal="pressed" from="content/columns/client_column/btn_send_rpc" to="." method="_on_btn_send_rpc_pressed"]
