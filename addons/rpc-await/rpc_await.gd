@@ -43,7 +43,7 @@ func send_msg_timeout(timeout: float, net_id: int, data: Variant) -> Variant:
     var req_obj := RequestAwaiter.new()
 
     if timeout > 0:
-        req_obj.timeout = Time.get_ticks_msec() + timeout
+        req_obj.timeout = Time.get_ticks_msec() + (timeout * 1000)
     var req_id = _next_id
     _next_id += 1
 
@@ -143,7 +143,7 @@ class RequestAwaiter:
 
 
     ## Ticks msecs at which this request will time out. Or 0 to disable timeout.
-    var timeout := 0.0
+    var timeout := 0
 
 
 ## Handed to signal handlers of the message_received signal to allow listeners to
