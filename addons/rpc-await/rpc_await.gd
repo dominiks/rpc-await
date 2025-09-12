@@ -91,6 +91,23 @@ func _handle_callable_request(req_id: int, method: String, path: String, args: A
 
     # Reconstruct the callable
     var target := get_tree().root.get_node(path)
+
+    # Check for target validity
+    if target:
+		var script = target.get_script()
+        
+        # Check for script validity
+		if script:
+
+            # Get list of RPCs in a given script.
+            # Created automatically by annotating the methods in the script using @rpc()
+			var rpc_config = script.get_rpc_config()
+
+            # Requested method must be included in the list, otherwise it is unauthorized and the function exits
+			if not rpc_config.has(method):
+				push_error("Unauthorized RPC attempt for method: ", method, " on path: ", path, " from sender ", sender_id)
+				return
+    
     var callable := Callable(target, method)
     if not args.is_empty():
         callable = callable.bindv(args)
