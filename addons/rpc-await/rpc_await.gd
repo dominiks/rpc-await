@@ -87,7 +87,6 @@ func send_rpc_timeout(timeout: float, net_id: int, callable: Callable) -> Varian
 
 @rpc("any_peer")
 func _handle_callable_request(req_id: int, method: String, path: String, args: Array) -> void:
-	multiplayer.get_remote_sender_id()
 	var sender_id := multiplayer.get_remote_sender_id()
 
 	# Reconstruct the callable
