@@ -27,8 +27,8 @@ var result = await RpcAwait.send_rpc(target_net_id, _do_some_work)
 ```GDScript
 @rpc("any_peer")
 func _do_some_work() -> String:
-    await get_tree().create_timer(2).timeout # You can use await on this side, too.
-    return "My Answer!"
+	await get_tree().create_timer(2).timeout # You can use await on this side, too.
+	return "My Answer!"
 ```
 
 ## Usage for messages
@@ -42,12 +42,12 @@ var result = await RpcAwait.send_msg(target_net_id, my_data)
 
 ```GDScript
 func _ready():
-    RpcAwait.message_received.connect(_message_received)
+	RpcAwait.message_received.connect(_message_received)
 
 func _message_received(req: RpcAwait.RequestData):
-    var my_data = req.data
-    [...]
-    req.result = my_result
+	var my_data = req.data
+	[...]
+	req.result = my_result
 ```
 
 ## Notes
