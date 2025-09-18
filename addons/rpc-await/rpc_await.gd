@@ -100,6 +100,10 @@ func _handle_callable_request(req_id: int, method: String, path: String, args: A
         push_error("rpc target not found at %s" % path)
         _handle_fail_response.rpc_id(sender_id, req_id, "rpc target not found at %s" % path)
         return
+    if target == self:
+        push_error("blocked recursive rpc call to rpc_await nodee")
+        _handle_fail_response.rpc_id(sender_id, req_id, "blocked recursive call to rpc_await node")
+        return
 
     # Check for script validity
     var script = target.get_script()
