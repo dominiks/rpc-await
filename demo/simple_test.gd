@@ -19,11 +19,11 @@ func _ready() -> void:
 
     get_tree().get_multiplayer().peer_connected.connect(_on_peer_connected)
     get_tree().get_multiplayer().peer_disconnected.connect(_on_peer_disconnected)
-    
+
     get_tree().get_multiplayer().connection_failed.connect(_on_connection_failed)
     get_tree().get_multiplayer().connected_to_server.connect(_on_connection_success)
     get_tree().get_multiplayer().server_disconnected.connect(_on_server_disconnected)
-    
+
     _set_test_buttons_disabled(true)
 
 
@@ -35,18 +35,19 @@ func _ready() -> void:
 func _on_rpc_await_message_received(req: RpcAwait.Message) -> void:
     _append_line("Received request, setting result.")
     req.result = req.data * 2
-    
+
 
 ## This function gets called on the other peer via rpc. It is not possible to
 ## check if a function called this way has a @rpc marker so it does not
 ## need one.
+@rpc("any_peer")
 func _rpc_get_number_doubled(number: int) -> int:
     _append_line("Number doubling function called, we'll wait for 2 seconds.")
     await get_tree().create_timer(2).timeout
     _append_line("Timer run through, returning result.")
     return number * 2
-    
-    
+
+
 ######### Button handlers #########
 
 ## Test button was pressed. Send the message to the peer and wait for the result.
@@ -69,7 +70,7 @@ func _on_btn_send_rpc_pressed():
 func _on_btn_join_pressed():
     _set_mp_buttons_disabled(true)
     _append_line("Trying to connect to %s:%s" % [_txt_address.text, _txt_port.text])
-    
+
     var peer := ENetMultiplayerPeer.new()
     var err := peer.create_client(_txt_address.text, int(_txt_port.text))
     if err != OK:
@@ -109,7 +110,7 @@ func _on_peer_disconnected(net_id: int) -> void:
 
 func _on_connection_failed() -> void:
     _append_line("Connecting to server failed.")
-    _set_mp_buttons_disabled(false)    
+    _set_mp_buttons_disabled(false)
     get_tree().get_multiplayer().multiplayer_peer = null
 
 
@@ -125,10 +126,10 @@ func _on_connection_success() -> void:
     _append_line("Connected to server.")
     _peer_id = 1
     _set_mp_buttons_disabled(true)
-    
+
 
 ######### Helper functions #########
-func _append_line(msg: String) -> void:    
+func _append_line(msg: String) -> void:
     _txt_output.text += "\n%s\t%s" % [Time.get_time_string_from_system(), msg]
     _txt_output.get_v_scroll_bar().value = _txt_output.get_v_scroll_bar().max_value
 

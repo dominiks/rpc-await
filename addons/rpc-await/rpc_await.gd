@@ -66,10 +66,11 @@ func send_rpc(net_id: int, callable: Callable) -> Variant:
 ## Call function via RPC and return the result. With custom timeout (in seconds).
 func send_rpc_timeout(timeout: float, net_id: int, callable: Callable) -> Variant:
     # Store get_object() result in var until #73998 is fixed.
+
     var source_obj = callable.get_object()
     assert(source_obj is Node)
     assert(source_obj.is_inside_tree())
-    
+
     var req_obj := RequestAwaiter.new()
 
     if timeout > 0:
@@ -77,7 +78,7 @@ func send_rpc_timeout(timeout: float, net_id: int, callable: Callable) -> Varian
     var req_id = _next_id
     _next_id += 1
     _open_requests[req_id] = req_obj
-    
+
     _handle_callable_request.rpc_id(net_id, req_id,
                                     callable.get_method(),
                                     source_obj.get_path(),
@@ -87,27 +88,38 @@ func send_rpc_timeout(timeout: float, net_id: int, callable: Callable) -> Varian
 
 @rpc("any_peer")
 func _handle_callable_request(req_id: int, method: String, path: String, args: Array) -> void:
+    multiplayer.get_remote_sender_id()
     var sender_id := get_tree().get_multiplayer().get_remote_sender_id()
 
     # Reconstruct the callable
     var target := get_tree().root.get_node(path)
 
     # Check for target validity
-    if target:
-		var script = target.get_script()
-        
-        # Check for script validity
-		if script:
+    if target == null:
+        push_error("rpc target not found at %s" % path)
+        _handle_fail_response.rpc_id(sender_id, req_id, "rpc target not found at %s" % path)
+        return
 
-            # Get list of RPCs in a given script.
-            # Created automatically by annotating the methods in the script using @rpc()
-			var rpc_config = script.get_rpc_config()
+    # Check for script validity
+    var script = target.get_script()
+    if script == null:
+        push_error("no script found at %s" % path)
+        _handle_fail_response.rpc_id(sender_id, req_id, "no script found at %s" % path)
+        return
 
-            # Requested method must be included in the list, otherwise it is unauthorized and the function exits
-			if not rpc_config.has(method):
-				push_error("Unauthorized RPC attempt for method: ", method, " on path: ", path, " from sender ", sender_id)
-				return
-    
+    # Retrieve and check the rpc mode of the target method
+    var callable_rpc_mode := _get_rpc_mode(script, method)
+    if callable_rpc_mode == MultiplayerAPI.RPC_MODE_DISABLED:
+        push_error("%s not marked as rpc-method" % method)
+        _handle_fail_response.rpc_id(sender_id, req_id, "%s not marked for rpc" % method)
+        return
+
+    if callable_rpc_mode == MultiplayerAPI.RPC_MODE_AUTHORITY and target.get_multiplayer_authority() != sender_id:
+        push_error("%s called by %s but only available for authority (%s)" % [method, sender_id, target.get_multiplayer_authority()])
+        _handle_fail_response.rpc_id(sender_id, req_id, "%s only available for authority" % method)
+        return
+
+    # Reconstruct the callable
     var callable := Callable(target, method)
     if not args.is_empty():
         callable = callable.bindv(args)
@@ -138,6 +150,16 @@ func _handle_response(req_id: int, data: Variant) -> void:
     req_obj.done.emit(data)
 
 
+@rpc("any_peer")
+func _handle_fail_response(req_id: int, error_msg: String) -> void:
+    if not req_id in _open_requests:
+        push_warning("Received fail response for unknown id %s (timed out?)" % req_id)
+        return
+    var req_obj = _open_requests[req_id]
+    _open_requests.erase(req_id)
+    push_error(error_msg)
+
+
 ## Iterate over all waiting RequestAwaiters and check if they timed out.
 ##
 ## Timed out awaiters emit their signal with null.
@@ -149,6 +171,15 @@ func _on_timeout_timer_tick() -> void:
         if awaiter.timeout > 0 and awaiter.timeout <= now:
             _open_requests.erase(id)
             awaiter.done.emit(null)
+
+
+func _get_rpc_mode(script: Script, method_name: String) -> MultiplayerAPI.RPCMode:
+    var rpc_config := script.get_rpc_config()
+    if method_name not in rpc_config:
+        return MultiplayerAPI.RPC_MODE_DISABLED
+    if "rpc_mode" not in rpc_config[method_name]:
+        return MultiplayerAPI.RPC_MODE_DISABLED
+    return rpc_config[method_name]["rpc_mode"]
 
 
 ## Utility object that represents an open await waiting for a resposne via rpc.
@@ -170,6 +201,6 @@ class Message:
 
     ## The data that was sent with this message.
     var data: Variant
-    
+
     ## The result that will be returned. Set by handlers of the message_received signal.
     var result: Variant

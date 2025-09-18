@@ -11,10 +11,15 @@ config_version=5
 [application]
 
 config/name="rpc-await"
+config/tags=PackedStringArray("tool")
 run/main_scene="res://demo/simple_test.tscn"
-config/features=PackedStringArray("4.0", "Forward Plus")
+config/features=PackedStringArray("4.5", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
 
 RpcAwait="*res://addons/rpc-await/rpc_await.gd"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/rpc-await/plugin.cfg")

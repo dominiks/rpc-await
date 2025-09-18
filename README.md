@@ -3,6 +3,8 @@ Small layer for Godot 4 RPC to allow making rpc-calls or sending messages to pee
 
 Because sometimes you just want to request something from a client and await the result to continue instead of spreading your code over multiple functions that call each other over different machines.
 
+*Requires Godot 4.5*. If you are using Godot 4.x earlier than that you must use rpc_await 1.0.
+
 ## Documentation
 * This readme for a quick overview
 * The example scene for a working example
@@ -15,13 +17,15 @@ Because sometimes you just want to request something from a client and await the
 ## Usage calling functions
 * Use `send_rpc` or `send_rpc_timeout` to call a function on the same location in the scene tree of the peer:
 
+
 ```GDScript
-var result = RpcAwait.send_rpc(target_net_id, _do_some_work)
+var result = await RpcAwait.send_rpc(target_net_id, _do_some_work)
 ```
 
-* The peer needs to have this function, but no need for the `@rpc` annotation:
+* The peer needs to have this function and it needs the correct rpc annotation to be accessible ("any_peer" or "authority"):
 
 ```GDScript
+@rpc("any_peer")
 func _do_some_work() -> String:
     await get_tree().create_timer(2).timeout # You can use await on this side, too.
     return "My Answer!"
