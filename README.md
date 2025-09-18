@@ -3,7 +3,7 @@ Small layer for Godot 4 RPC to allow making rpc-calls or sending messages to pee
 
 Because sometimes you just want to request something from a client and await the result to continue instead of spreading your code over multiple functions that call each other over different machines.
 
-*Requires Godot 4.5*. If you are using Godot 4.x earlier than that you must use rpc_await 1.0.
+*Requires Godot 4.4*. If you are using Godot 4.x earlier than that you must use rpc_await 1.0.
 
 ## Documentation
 * This readme for a quick overview
