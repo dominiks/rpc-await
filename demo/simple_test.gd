@@ -5,7 +5,7 @@ extends Control
 @onready var _txt_port: LineEdit = find_child("txt_port")
 @onready var _btn_join: Button = find_child("btn_join")
 @onready var _btn_host: Button = find_child("btn_host")
-@onready var _btn_send_request: Button = find_child("btn_send_request")
+@onready var _btn_send_message: Button = find_child("btn_send_message")
 @onready var _btn_send_rpc: Button = find_child("btn_send_rpc")
 @onready var _txt_output: TextEdit = find_child("txt_output")
 
@@ -33,7 +33,7 @@ func _ready() -> void:
 ## set a result. The message contents is placed in req.data but in this case
 ## we just expect an int to multiply with 2.
 func _on_rpc_await_message_received(req: RpcAwait.Message) -> void:
-    _append_line("Received request, setting result.")
+    _append_line("Received message, setting result.")
     req.result = req.data * 2
 
 
@@ -51,10 +51,10 @@ func _rpc_get_number_doubled(number: int) -> int:
 ######### Button handlers #########
 
 ## Test button was pressed. Send the message to the peer and wait for the result.
-func _on_btn_send_request_pressed():
-    _append_line("Sending request to peer %s" % _peer_id)
+func _on_btn_send_message_pressed():
+    _append_line("Sending message '5' to peer %s" % _peer_id)
     var result = await RpcAwait.send_msg(_peer_id, 5)
-    _append_line("Received result: %s" % result)
+    _append_line("Received result: '%s'" % result)
 
 
 ## Test the rpc function call. The function will be called with a parameter
@@ -140,5 +140,5 @@ func _set_mp_buttons_disabled(state: bool) -> void:
 
 
 func _set_test_buttons_disabled(state: bool) -> void:
-    _btn_send_request.disabled = state
+    _btn_send_message.disabled = state
     _btn_send_rpc.disabled = state
