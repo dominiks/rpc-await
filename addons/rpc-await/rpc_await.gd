@@ -1,3 +1,4 @@
+class_name RpcAwaiter
 extends Node
 ## Implements a communication scheme over RPC that allows a peer to await a
 ## function call or await a sent message until a response is received that brings a return value.
@@ -89,7 +90,7 @@ func send_rpc_timeout(timeout: float, net_id: int, callable: Callable) -> Varian
 @rpc("any_peer")
 func _handle_callable_request(req_id: int, method: String, path: String, args: Array) -> void:
     multiplayer.get_remote_sender_id()
-    var sender_id := get_tree().get_multiplayer().get_remote_sender_id()
+    var sender_id := multiplayer.get_remote_sender_id()
 
     # Reconstruct the callable
     var target := get_tree().root.get_node(path)
@@ -131,7 +132,7 @@ func _handle_callable_request(req_id: int, method: String, path: String, args: A
 
 @rpc("any_peer")
 func _handle_msg_request(req_id: int, data: Variant) -> void:
-    var sender_id := get_tree().get_multiplayer().get_remote_sender_id()
+    var sender_id := multiplayer.get_remote_sender_id()
     var request := Message.new()
     request.data = data
 
@@ -182,7 +183,7 @@ func _get_rpc_mode(script: Script, method_name: String) -> MultiplayerAPI.RPCMod
     return rpc_config[method_name]["rpc_mode"]
 
 
-## Utility object that represents an open await waiting for a resposne via rpc.
+## Utility object that represents an open await waiting for a response via rpc.
 class RequestAwaiter:
     extends RefCounted
 

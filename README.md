@@ -12,7 +12,7 @@ Because sometimes you just want to request something from a client and await the
 
 ## Installation
 * Add the `addons/rpc-await` folder to your project.
-* Add `rpc_await.gd` as an autoload or instantiate it and place in your tree wherever you like.
+* Add `rpc_await.gd` as an autoload or instantiate an `RpcAwaiter` node in your tree wherever you like.
 
 ## Usage calling functions
 * Use `send_rpc` or `send_rpc_timeout` to call a function on the same location in the scene tree of the peer:
