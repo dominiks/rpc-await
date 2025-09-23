@@ -15,7 +15,7 @@ var _peer_id: int = -1
 
 
 func _ready() -> void:
-	RpcAwait.message_received.connect(_on_rpc_await_message_received)
+	RpcAwait.add_message_listener(_on_rpc_await_message_received)
 
 	get_tree().get_multiplayer().peer_connected.connect(_on_peer_connected)
 	get_tree().get_multiplayer().peer_disconnected.connect(_on_peer_disconnected)
@@ -32,8 +32,10 @@ func _ready() -> void:
 ## rpc_await node sends out a signal when a msg is received so handlers can
 ## set a result. The message contents is placed in req.data but in this case
 ## we just expect an int to multiply with 2.
-func _on_rpc_await_message_received(req: RpcAwait.Message) -> void:
-	_append_line("Received message, setting result.")
+func _on_rpc_await_message_received(req: RpcAwaiter.Message) -> void:
+	_append_line("Received message, waiting for a bit")
+	await get_tree().create_timer(2).timeout
+	_append_line("setting result")
 	req.result = req.data * 2
 
 

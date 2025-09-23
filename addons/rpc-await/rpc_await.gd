@@ -4,12 +4,6 @@ extends Node
 ## function call or await a sent message until a response is received that brings a return value.
 
 
-## Emitted when a message has been received that now needs processing and a result.
-##
-## The Message contains the message's data and a field to place your result into.
-signal message_received(req: Message)
-
-
 ## How long requests may wait for a response until the await is relased.
 ##
 ## A timeout of <=0 means no timeout.
@@ -28,6 +22,11 @@ var _next_id := 0
 ## Timer node to regularly check
 var _timeout_timer := Timer.new()
 
+## Set of all registered listener callables.
+##
+## Dictionary used as a Set to prevent duplicates.
+var _message_listeners: Dictionary[Callable, bool] = {}
+
 
 func _init() -> void:
 	_timeout_timer.autostart = true
@@ -37,6 +36,19 @@ func _init() -> void:
 
 func _ready() -> void:
 	_timeout_timer.wait_time = timer_interval
+
+
+## Register a callable to listen for message events.
+##
+## The callable must have one parameter with the type RpcAwaiter.Message.
+## Registering the same callable multiple times has no effect.
+func add_message_listener(listener: Callable) -> void:
+	_message_listeners[listener] = true
+
+
+## Unregister a callable from receiving message events.
+func remove_message_listener(listener: Callable) -> void:
+	_message_listeners.erase(listener)
 
 
 ## Send a message with a custom timeout (in seconds).
@@ -153,7 +165,8 @@ func _handle_msg_request(req_id: int, data: Variant) -> void:
 	var request := Message.new()
 	request.data = data
 
-	message_received.emit(request)
+	for callable in _message_listeners.keys():
+		await callable.call(request)
 
 	_handle_response.rpc_id(sender_id, req_id, request.result)
 

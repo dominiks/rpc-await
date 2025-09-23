@@ -42,7 +42,7 @@ var result = await RpcAwait.send_msg(target_net_id, my_data)
 
 ```GDScript
 func _ready():
-	RpcAwait.message_received.connect(_message_received)
+	RpcAwait.add_message_listener(_message_received)
 
 func _message_received(req: RpcAwait.RequestData):
 	var my_data = req.data
@@ -50,7 +50,8 @@ func _message_received(req: RpcAwait.RequestData):
 	req.result = my_result
 ```
 
+If you frequently add and free nodes that are registered as message listeners you should make sure to use `RpcAwait.remove_message_listener()` in the `_exit_tree()` handler or when you `free()` your nodes.
+
 ## Notes
-* The signal handlers of `message_received` may not use `await` themselves.
 * `RpcAwait.default_timeout_secs` [default 5.0] can be changed to suit your needs. Values <= 0 disable the timeout.
 * Give a custom timeout value for specific calls using `send_rpc_timeout` and `send_msg_timeout` variants.
