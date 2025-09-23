@@ -116,7 +116,8 @@ func _handle_callable_request(req_id: int, method: String, path: String, args: A
 		return
 
 	# Retrieve and check the rpc mode of the target method
-	var callable_rpc_mode := _get_rpc_mode(script, method)
+	var rpc_config = script.get_rpc_config()
+	var callable_rpc_mode := _get_rpc_mode(rpc_config, method)
 	if callable_rpc_mode == MultiplayerAPI.RPC_MODE_DISABLED:
 		var err_msg := "%s not marked as rpc-method" % method
 		push_error(err_msg)
@@ -125,6 +126,13 @@ func _handle_callable_request(req_id: int, method: String, path: String, args: A
 
 	if callable_rpc_mode == MultiplayerAPI.RPC_MODE_AUTHORITY and target.get_multiplayer_authority() != sender_id:
 		var err_msg := "%s called by %s but only available for authority (%s)" % [method, sender_id, target.get_multiplayer_authority()]
+		push_error(err_msg)
+		_handle_fail_response.rpc_id(sender_id, req_id, err_msg)
+		return
+
+	# Check for rpc sync mode
+	if not _is_rpc_call_local(rpc_config, method) and multiplayer.get_remote_sender_id() == multiplayer.get_unique_id():
+		var err_msg := "%s called via rpc on local but is not set as call_local" % method
 		push_error(err_msg)
 		_handle_fail_response.rpc_id(sender_id, req_id, err_msg)
 		return
@@ -191,13 +199,20 @@ func _on_timeout_timer_tick() -> void:
 			awaiter.done.emit(null)
 
 
-func _get_rpc_mode(script: Script, method_name: String) -> MultiplayerAPI.RPCMode:
-	var rpc_config := script.get_rpc_config()
+func _get_rpc_mode(rpc_config: Dictionary, method_name: String) -> MultiplayerAPI.RPCMode:
 	if method_name not in rpc_config:
 		return MultiplayerAPI.RPC_MODE_DISABLED
 	if "rpc_mode" not in rpc_config[method_name]:
 		return MultiplayerAPI.RPC_MODE_DISABLED
 	return rpc_config[method_name]["rpc_mode"]
+
+
+func _is_rpc_call_local(rpc_config: Dictionary, method_name: String) -> bool:
+	if method_name not in rpc_config:
+		return false
+	if "call_local" not in rpc_config[method_name]:
+		return false
+	return rpc_config[method_name]["call_local"]
 
 
 ## Utility object that represents an open await waiting for a response via rpc.
