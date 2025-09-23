@@ -20,7 +20,7 @@ signal message_received(req: Message)
 
 
 ## Maps req_id -> RequestAwaiter to keep track of the open requests waiting for the response.
-var _open_requests := {}
+var _open_requests : Dictionary[int, RequestAwaiter] = {}
 
 ## ID counter for requests.
 var _next_id := 0
@@ -42,10 +42,11 @@ func _ready() -> void:
 ## Send a message with a custom timeout (in seconds).
 func send_msg_timeout(timeout: float, net_id: int, data: Variant) -> Variant:
 	var req_obj := RequestAwaiter.new()
+	req_obj.target_net_id = net_id
 
 	if timeout > 0:
 		req_obj.timeout = Time.get_ticks_msec() + (timeout * 1000)
-	var req_id = _next_id
+	var req_id := _next_id
 	_next_id += 1
 
 	_open_requests[req_id] = req_obj
@@ -71,6 +72,7 @@ func send_rpc_timeout(timeout: float, net_id: int, callable: Callable) -> Varian
 	assert(source_obj.is_inside_tree())
 
 	var req_obj := RequestAwaiter.new()
+	req_obj.target_net_id = net_id
 
 	if timeout > 0:
 		req_obj.timeout = Time.get_ticks_msec() + (timeout * 1000)
@@ -153,7 +155,11 @@ func _handle_response(req_id: int, data: Variant) -> void:
 	if not req_id in _open_requests:
 		push_warning("Received response for unknown id %s (timed out?)" % req_id)
 		return
-	var req_obj = _open_requests[req_id]
+	var req_obj := _open_requests[req_id]
+	if req_obj.target_net_id != multiplayer.get_remote_sender_id():
+		push_warning("Dismissed response from unexpected net_id")
+		return
+
 	_open_requests.erase(req_id)
 	req_obj.done.emit(data)
 
@@ -163,7 +169,11 @@ func _handle_fail_response(req_id: int, error_msg: String) -> void:
 	if not req_id in _open_requests:
 		push_warning("Received fail response for unknown id %s (timed out?)" % req_id)
 		return
-	var req_obj = _open_requests[req_id]
+	var req_obj := _open_requests[req_id]
+	if req_obj.target_net_id != multiplayer.get_remote_sender_id():
+		push_warning("Dismissed fail response from unexpected net_id")
+		return
+
 	_open_requests.erase(req_id)
 	push_error(error_msg)
 
@@ -174,7 +184,7 @@ func _handle_fail_response(req_id: int, error_msg: String) -> void:
 func _on_timeout_timer_tick() -> void:
 	var now := Time.get_ticks_msec()
 	for id in _open_requests.keys():
-		var awaiter = _open_requests[id]
+		var awaiter := _open_requests[id]
 
 		if awaiter.timeout > 0 and awaiter.timeout <= now:
 			_open_requests.erase(id)
@@ -200,6 +210,9 @@ class RequestAwaiter:
 
 	## Ticks msecs at which this request will time out. Or 0 to disable timeout.
 	var timeout := 0
+
+	## The net_id that we expect to receive a response from for this request
+	var target_net_id := 0
 
 
 ## Handed to signal handlers of the message_received signal to allow listeners to
