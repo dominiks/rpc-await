@@ -52,9 +52,10 @@ func remove_message_listener(listener: Callable) -> void:
 
 
 ## Send a message with a custom timeout (in seconds).
-func send_msg_timeout(timeout: float, net_id: int, data: Variant) -> Variant:
+func send_msg_timeout(timeout: float, net_id: int, data: Variant, default_return: Variant = null) -> Variant:
 	var req_obj := RequestAwaiter.new()
 	req_obj.target_net_id = net_id
+	req_obj.default_return = default_return
 
 	if timeout > 0:
 		req_obj.timeout = Time.get_ticks_msec() + (timeout * 1000)
@@ -68,23 +69,24 @@ func send_msg_timeout(timeout: float, net_id: int, data: Variant) -> Variant:
 
 
 ## Send a message to the given peer and await the response.
-func send_msg(net_id: int, data: Variant) -> Variant:
-	return await send_msg_timeout(default_timeout_secs, net_id, data)
+func send_msg(net_id: int, data: Variant, default_return: Variant = null) -> Variant:
+	return await send_msg_timeout(default_timeout_secs, net_id, data, default_return)
 
 
 ## Call function via RPC and return the result.
-func send_rpc(net_id: int, callable: Callable) -> Variant:
-	return await send_rpc_timeout(default_timeout_secs, net_id, callable)
+func send_rpc(net_id: int, callable: Callable, default_return: Variant = null) -> Variant:
+	return await send_rpc_timeout(default_timeout_secs, net_id, callable, default_return)
 
 
 ## Call function via RPC and return the result. With custom timeout (in seconds).
-func send_rpc_timeout(timeout: float, net_id: int, callable: Callable) -> Variant:
+func send_rpc_timeout(timeout: float, net_id: int, callable: Callable, default_return: Variant = null) -> Variant:
 	var source_obj = callable.get_object()
 	assert(source_obj is Node)
 	assert(source_obj.is_inside_tree())
 
 	var req_obj := RequestAwaiter.new()
 	req_obj.target_net_id = net_id
+	req_obj.default_return = default_return
 
 	if timeout > 0:
 		req_obj.timeout = Time.get_ticks_msec() + (timeout * 1000)
@@ -197,6 +199,7 @@ func _handle_fail_response(req_id: int, error_msg: String) -> void:
 
 	_open_requests.erase(req_id)
 	push_error(error_msg)
+	req_obj.done.emit(req_obj.default_return)
 
 
 ## Iterate over all waiting RequestAwaiters and check if they timed out.
@@ -209,7 +212,7 @@ func _on_timeout_timer_tick() -> void:
 
 		if awaiter.timeout > 0 and awaiter.timeout <= now:
 			_open_requests.erase(id)
-			awaiter.done.emit(null)
+			awaiter.done.emit(awaiter.default_return)
 
 
 func _get_rpc_mode(rpc_config: Dictionary, method_name: String) -> MultiplayerAPI.RPCMode:
@@ -241,6 +244,9 @@ class RequestAwaiter:
 
 	## The net_id that we expect to receive a response from for this request
 	var target_net_id := 0
+
+	## The default value that is to be returned in case of timeout or error
+	var default_return: Variant = null
 
 
 ## Handed to signal handlers of the message_received signal to allow listeners to

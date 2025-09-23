@@ -55,3 +55,4 @@ If you frequently add and free nodes that are registered as message listeners yo
 ## Notes
 * `RpcAwait.default_timeout_secs` [default 5.0] can be changed to suit your needs. Values <= 0 disable the timeout.
 * Give a custom timeout value for specific calls using `send_rpc_timeout` and `send_msg_timeout` variants.
+* You can provide a `default_return` value to the rpc- and message-sending functions to specify the value that should be returned in case of a timeout or error.
