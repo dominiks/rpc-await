@@ -101,7 +101,7 @@ func send_rpc_timeout(timeout: float, net_id: int, callable: Callable, default_r
 	return await req_obj.done
 
 
-@rpc("any_peer")
+@rpc("any_peer", "call_local", "reliable")
 func _handle_callable_request(req_id: int, method: String, path: String, args: Array) -> void:
 	var sender_id := multiplayer.get_remote_sender_id()
 
@@ -161,7 +161,7 @@ func _handle_callable_request(req_id: int, method: String, path: String, args: A
 	_handle_response.rpc_id(sender_id, req_id, result)
 
 
-@rpc("any_peer")
+@rpc("any_peer", "call_local", "reliable")
 func _handle_msg_request(req_id: int, data: Variant) -> void:
 	var sender_id := multiplayer.get_remote_sender_id()
 	var request := Message.new()
@@ -173,7 +173,7 @@ func _handle_msg_request(req_id: int, data: Variant) -> void:
 	_handle_response.rpc_id(sender_id, req_id, request.result)
 
 
-@rpc("any_peer")
+@rpc("any_peer", "call_local", "reliable")
 func _handle_response(req_id: int, data: Variant) -> void:
 	if not req_id in _open_requests:
 		push_warning("Received response for unknown id %s (timed out?)" % req_id)
@@ -187,7 +187,7 @@ func _handle_response(req_id: int, data: Variant) -> void:
 	req_obj.done.emit(data)
 
 
-@rpc("any_peer")
+@rpc("any_peer", "call_local", "reliable")
 func _handle_fail_response(req_id: int, error_msg: String) -> void:
 	if not req_id in _open_requests:
 		push_warning("Received fail response for unknown id %s (timed out?)" % req_id)
