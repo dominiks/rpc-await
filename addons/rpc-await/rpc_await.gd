@@ -65,7 +65,12 @@ func send_msg_timeout(timeout: float, net_id: int, data: Variant, default_return
 	_open_requests[req_id] = req_obj
 	_handle_msg_request.rpc_id(net_id, req_id, data)
 
-	return await req_obj.done
+	# The operation might have already completed when executing locally so
+	# there is no use in waiting for the signal.
+	if req_obj.is_done:
+		return req_obj.result
+	else:
+		return await req_obj.done
 
 
 ## Send a message to the given peer and await the response.
@@ -98,7 +103,13 @@ func send_rpc_timeout(timeout: float, net_id: int, callable: Callable, default_r
 									callable.get_method(),
 									source_obj.get_path(),
 									callable.get_bound_arguments())
-	return await req_obj.done
+
+	# The operation might have already completed when executing locally so
+	# there is no use in waiting for the signal.
+	if req_obj.is_done:
+		return req_obj.result
+	else:
+		return await req_obj.done
 
 
 @rpc("any_peer", "call_local", "reliable")
@@ -239,6 +250,12 @@ class RequestAwaiter:
 	signal done(data: Variant)
 
 
+	## Flag to check whether this request has completed
+	var is_done := false
+
+	## Result of the operation
+	var result: Variant
+
 	## Ticks msecs at which this request will time out. Or 0 to disable timeout.
 	var timeout := 0
 
@@ -247,6 +264,17 @@ class RequestAwaiter:
 
 	## The default value that is to be returned in case of timeout or error
 	var default_return: Variant = null
+
+
+	func _init() -> void:
+		done.connect(_on_done)
+
+
+	## When done, set result and done-flag on yourself - in case the operation
+	## is complete before anyone was able to listen to the signal.
+	func _on_done(result: Variant) -> void:
+		self.is_done = true
+		self.result = result
 
 
 ## Handed to signal handlers of the message_received signal to allow listeners to
